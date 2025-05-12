@@ -52,16 +52,17 @@
   }
 
   // RN에서 메시지 수신 (Android)
-  document.addEventListener('message', function (event) {
-    try {
-      const message = JSON.parse(event.data);
-      if (message.type === 'searchPlace') {
-        searchAndMark(message.data.keyword, message.data.mode);
-      }
-    } catch (e) {
-      console.error('Android 메시지 파싱 오류:', e);
+ document.addEventListener('message', function (event) {
+  try {
+    const message = JSON.parse(event.data);
+    console.log('🌐 WebView 내부 수신:', message);
+    if (message.type === 'searchPlace') {
+      searchAndMark(message.data.keyword, message.data.mode);
     }
-  });
+  } catch (e) {
+    console.error('WebView 내부 메시지 파싱 오류:', e);
+  }
+});
 
   // iOS 호환
   window.addEventListener('message', function (event) {
