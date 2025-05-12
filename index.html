@@ -16,70 +16,65 @@
 </head>
 <body>
   <div id="map"></div>
-
-  <script>
-    let map = new naver.maps.Map('map', {
-      center: new naver.maps.LatLng(37.5665, 126.9780),
-      zoom: 14,
-    });
-
-    let marker = null;
-
-        // RN으로 전달
-        window.ReactNativeWebView.postMessage(JSON.stringify({
-          type: 'selectPlace',
-          data: { lat, lng }
-        }));
-      });
-    }
-
-    // RN에서 받은 메시지 처리
-document.addEventListener('message', function (event) {
-  const message = JSON.parse(event.data);
-  if (message.type === 'searchPlace') {
-    searchAndMark(message.data.keyword, message.data.mode);
-  }
-});
-
-// 마커 표시 함수
-function searchAndMark(keyword, mode) {
-  naver.maps.Service.geocode({ query: keyword }, function (status, response) {
-    if (status !== naver.maps.Service.Status.OK) {
-      alert('검색 실패');
-      return;
-    }
-    const item = response.v2.addresses[0];
-    const lat = parseFloat(item.y);
-    const lng = parseFloat(item.x);
-
-    // 마커 갱신
-    if (marker) marker.setMap(null);
-    marker = new naver.maps.Marker({
-      position: new naver.maps.LatLng(lat, lng),
-      map: map,
-    });
-    map.setCenter(new naver.maps.LatLng(lat, lng));
-
-    // RN으로 전달 (mode 포함해서)
-    window.ReactNativeWebView.postMessage(JSON.stringify({
-      type: 'selectPlace',
-      data: { lat, lng, mode, keyword }
-    }));
+<script>
+  let map = new naver.maps.Map('map', {
+    center: new naver.maps.LatLng(37.5665, 126.9780),
+    zoom: 14,
   });
-}
 
+  let marker = null;
 
-    // iOS용 호환
-    window.addEventListener('message', function (event) {
-      try {
-        const message = JSON.parse(event.data);
-        if (message.type === 'searchPlace') {
-          searchAndMark(message.data.keyword);
-        }
-      } catch (e) {
-        console.error('iOS 메시지 파싱 오류:', e);
+  // 마커 표시 함수 (mode 포함)
+  function searchAndMark(keyword, mode) {
+    if (!keyword) return;
+    naver.maps.Service.geocode({ query: keyword }, function (status, response) {
+      if (status !== naver.maps.Service.Status.OK) {
+        alert('검색 실패');
+        return;
       }
+      const item = response.v2.addresses[0];
+      const lat = parseFloat(item.y);
+      const lng = parseFloat(item.x);
+
+      if (marker) marker.setMap(null);
+      marker = new naver.maps.Marker({
+        position: new naver.maps.LatLng(lat, lng),
+        map: map,
+      });
+      map.setCenter(new naver.maps.LatLng(lat, lng));
+
+      // RN으로 전달 (항상 mode와 keyword 포함!)
+      window.ReactNativeWebView.postMessage(JSON.stringify({
+        type: 'selectPlace',
+        data: { lat, lng, mode, keyword }
+      }));
     });
-  </script>
+  }
+
+  // RN에서 메시지 수신 (Android)
+  document.addEventListener('message', function (event) {
+    try {
+      const message = JSON.parse(event.data);
+      if (message.type === 'searchPlace') {
+        searchAndMark(message.data.keyword, message.data.mode);
+      }
+    } catch (e) {
+      console.error('Android 메시지 파싱 오류:', e);
+    }
+  });
+
+  // iOS 호환
+  window.addEventListener('message', function (event) {
+    try {
+      const message = JSON.parse(event.data);
+      if (message.type === 'searchPlace') {
+        searchAndMark(message.data.keyword, message.data.mode);
+      }
+    } catch (e) {
+      console.error('iOS 메시지 파싱 오류:', e);
+    }
+  });
+</script>
+
 </body>
 </html>
