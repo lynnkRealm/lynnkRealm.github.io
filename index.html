@@ -44,6 +44,7 @@
       map.setCenter(new naver.maps.LatLng(lat, lng));
 
       // RN으로 전달 (항상 mode와 keyword 포함!)
+      console.log('🌐 WebView → RN 전송:', { lat, lng, mode, keyword });
       window.ReactNativeWebView.postMessage(JSON.stringify({
         type: 'selectPlace',
         data: { lat, lng, mode, keyword }
