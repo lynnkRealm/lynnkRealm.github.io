@@ -3,9 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>RN WebView Naver Map</title>
+  <title>RN 연동 네이버 지도</title>
   <script src="https://openapi.map.naver.com/openapi/v3/maps.js?ncpClientId=g68mo7vlzd"></script>
-  <style>body, html, #map { margin: 0; padding: 0; width: 100%; height: 100%; }</style>
+  <style>
+    body, html, #map { margin: 0; padding: 0; width: 100%; height: 100%; }
+  </style>
 </head>
 <body>
   <div id="map"></div>
@@ -16,13 +18,6 @@
     });
     let marker = null;
 
-    document.addEventListener('message', (event) => {
-      const message = JSON.parse(event.data);
-      if (message.type === 'searchPlace') {
-        searchAndMark(message.data.keyword, message.data.mode);
-      }
-    });
-
     function searchAndMark(keyword, mode) {
       naver.maps.Service.geocode({ query: keyword }, function (status, response) {
         if (status !== naver.maps.Service.Status.OK) return;
@@ -32,12 +27,31 @@
         if (marker) marker.setMap(null);
         marker = new naver.maps.Marker({ position: new naver.maps.LatLng(lat, lng), map });
         map.setCenter(new naver.maps.LatLng(lat, lng));
-        window.ReactNativeWebView.postMessage(JSON.stringify({
+        // 항상 RN으로 보내기 (Android 대응)
+        window.ReactNativeWebView?.postMessage(JSON.stringify({
           type: 'selectPlace',
           data: { lat, lng, mode, keyword }
         }));
       });
     }
+
+    window.addEventListener('message', function (event) {
+      try {
+        const message = JSON.parse(event.data);
+        if (message.type === 'searchPlace') {
+          searchAndMark(message.data.keyword, message.data.mode);
+        }
+      } catch (e) {
+        console.error('메시지 파싱 오류:', e);
+      }
+    });
+
+    // Android RN WebView 강제 로딩 대응
+    setTimeout(() => {
+      window.ReactNativeWebView?.postMessage(JSON.stringify({
+        type: 'ready'
+      }));
+    }, 1000);
   </script>
 </body>
 </html>
